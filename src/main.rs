@@ -48,6 +48,10 @@ fn main() {
         obstacle.translation.y = thread_rng().gen_range(-300.0..300.0);
     }
 
+    // Create the health message
+    let health_message = game.add_text("health_message", "Health: 5");
+    health_message.translation = Vec2::new(550.0, 320.0);
+
     // Add one or more functions with logic for your game. When the game is run, the logic
     // functions will run in the order they were added.
     game.add_logic(game_logic);
@@ -64,6 +68,11 @@ fn main() {
 // The first parameter is always a `&mut Engine`, and the second parameter is a mutable reference to your custom game state struct (`&mut GameState` in this case).
 // This function will be run once each frame.
 fn game_logic(engine: &mut Engine, game_state: &mut GameState) {
+    // Don't run any more game logic if the game has ended
+    if game_state.lost {
+        return;
+    }
+
     // Collect keyboard input
     let mut direction = 0.0;
     if engine.keyboard_state.pressed(KeyCode::Up) {
@@ -85,7 +94,7 @@ fn game_logic(engine: &mut Engine, game_state: &mut GameState) {
 
     // Move road objects
     for sprite in engine.sprites.values_mut() {
-        // Roadlines
+        // Road lines
         if sprite.label.starts_with("roadline") {
             sprite.translation.x -= ROAD_SPEED * engine.delta_f32;
 
@@ -103,5 +112,29 @@ fn game_logic(engine: &mut Engine, game_state: &mut GameState) {
                 sprite.translation.y = thread_rng().gen_range(-300.0..300.0);
             }
         }
+    }
+
+    // Deal with collisions
+    let health_message = engine.texts.get_mut("health_message").unwrap();
+
+    // Go through all collision events and act accordingly
+    for event in engine.collision_events.drain(..) {
+        // We don't care if obstacles collide with each other or collisions end
+        if !event.pair.either_contains("player1") || event.state.is_end() {
+            continue;
+        }
+        if game_state.health_amount > 0 {
+            game_state.health_amount -= 1;
+            health_message.value = format!("Health: {}", game_state.health_amount);
+            engine.audio_manager.play_sfx(SfxPreset::Impact3, 0.7);
+        }
+    }
+
+    if game_state.health_amount == 0 {
+        game_state.lost = true;
+        let game_over = engine.add_text("game over", "Game Over");
+        game_over.font_size = 128.0;
+        engine.audio_manager.stop_music();
+        engine.audio_manager.play_sfx(SfxPreset::Jingle3, 0.75);
     }
 }
