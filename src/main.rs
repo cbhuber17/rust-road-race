@@ -19,6 +19,10 @@ fn add_player<'game>(game: &'game mut Game<GameState>, player_name: &'game str, 
     player.collision = true;
 }
 
+fn set_game_audio(game: & mut Game<GameState>, music: MusicPreset, volume: f32) {
+    game.audio_manager.play_music(music, volume);
+}
+
 fn main() {
     let mut game = Game::new();
 
@@ -26,8 +30,7 @@ fn main() {
     add_player(&mut game, "player1", SpritePreset::RacingCarBlue);
 
     // Audio
-    game.audio_manager
-        .play_music(MusicPreset::WhimsicalPopsicle, 0.2);
+    set_game_audio(&mut game, MusicPreset::WhimsicalPopsicle, 0.2);
 
     // Create the road lines
     for i in 0..10 {
