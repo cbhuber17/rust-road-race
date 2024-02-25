@@ -1,4 +1,5 @@
 // in src/main.rs
+use rand::prelude::*;
 use rusty_engine::prelude::*;
 
 const PLAYER_SPEED: f32 = 250.0;
@@ -29,6 +30,22 @@ fn main() {
         let roadline = game.add_sprite(format!("roadline{}", i), SpritePreset::RacingBarrierWhite);
         roadline.scale = 0.1;
         roadline.translation.x = -600.0 + 150.0 * i as f32;
+    }
+
+    // Road obstacles
+    let obstacle_presets = vec![
+        SpritePreset::RacingBarrelBlue,
+        SpritePreset::RacingBarrelRed,
+        SpritePreset::RacingConeStraight,
+    ];
+
+    // Init obstacles
+    for (i, preset) in obstacle_presets.into_iter().enumerate() {
+        let obstacle = game.add_sprite(format!("obstacle{}", i), preset);
+        obstacle.layer = 5.0;
+        obstacle.collision = true;
+        obstacle.translation.x = thread_rng().gen_range(800.0..1600.0);
+        obstacle.translation.y = thread_rng().gen_range(-300.0..300.0);
     }
 
     // Add one or more functions with logic for your game. When the game is run, the logic
@@ -68,12 +85,22 @@ fn game_logic(engine: &mut Engine, game_state: &mut GameState) {
 
     // Move road objects
     for sprite in engine.sprites.values_mut() {
+        // Roadlines
         if sprite.label.starts_with("roadline") {
             sprite.translation.x -= ROAD_SPEED * engine.delta_f32;
 
             // Translate road objects to other side of screen if gone too far
             if sprite.translation.x < -675.0 {
                 sprite.translation.x += 1500.0;
+            }
+        }
+
+        // Obstacles
+        if sprite.label.starts_with("obstacle") {
+            sprite.translation.x -= ROAD_SPEED * engine.delta_f32;
+            if sprite.translation.x < -800.0 {
+                sprite.translation.x = thread_rng().gen_range(800.0..1600.0);
+                sprite.translation.y = thread_rng().gen_range(-300.0..300.0);
             }
         }
     }
