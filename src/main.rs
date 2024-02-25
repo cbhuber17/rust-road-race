@@ -12,14 +12,18 @@ struct GameState {
     lost: bool,
 }
 
+fn add_player<'game>(game: &'game mut Game<GameState>, player_name: &'game str, car: SpritePreset) {
+    let player = game.add_sprite(player_name, car);
+    player.translation.x = -500.0;
+    player.layer = 10.0;
+    player.collision = true;
+}
+
 fn main() {
     let mut game = Game::new();
 
-    // Create the player sprite
-    let player1 = game.add_sprite("player1", SpritePreset::RacingCarBlue);
-    player1.translation.x = -500.0;
-    player1.layer = 10.0;
-    player1.collision = true;
+    // Create the player sprite, name is restricted to "playerX"
+    add_player(&mut game, "player1", SpritePreset::RacingCarBlue);
 
     // Audio
     game.audio_manager
