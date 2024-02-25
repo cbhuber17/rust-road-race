@@ -28,7 +28,7 @@ fn create_road_lines(game: &mut Game<GameState>, barrier: SpritePreset) {
 
     for i in 0..NUM_LINES {
         let roadline = game.add_sprite(format!("roadline{}", i), barrier);
-        roadline.scale = 0.1;
+        roadline.scale = 0.2;
         roadline.translation.x = -600.0 + 150.0 * i as f32;
     }
 }
