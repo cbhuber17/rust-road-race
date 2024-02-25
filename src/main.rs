@@ -1,4 +1,3 @@
-// in src/main.rs
 use rand::prelude::*;
 use rusty_engine::prelude::*;
 
@@ -7,10 +6,13 @@ const ROAD_SPEED: f32 = 400.0;
 
 // Custom game state struct
 #[derive(Resource)]
-struct GameState {
+struct GameState<'name> {
+    player_name: &'name str,
     health_amount: u8,
     lost: bool,
 }
+
+// ----------------------------------------------------------------------------------------------
 
 fn add_player<'game>(game: &'game mut Game<GameState>, player_name: &'game str, car: SpritePreset) {
     let player = game.add_sprite(player_name, car);
@@ -19,9 +21,13 @@ fn add_player<'game>(game: &'game mut Game<GameState>, player_name: &'game str, 
     player.collision = true;
 }
 
+// ----------------------------------------------------------------------------------------------
+
 fn set_game_audio(game: &mut Game<GameState>, music: MusicPreset, volume: f32) {
     game.audio_manager.play_music(music, volume);
 }
+
+// ----------------------------------------------------------------------------------------------
 
 fn create_road_lines(game: &mut Game<GameState>, barrier: SpritePreset) {
     const NUM_LINES:u8 = 10;
@@ -33,19 +39,10 @@ fn create_road_lines(game: &mut Game<GameState>, barrier: SpritePreset) {
     }
 }
 
-fn main() {
-    let mut game = Game::new();
 
-    // Create the player sprite, name is restricted to "playerX"
-    add_player(&mut game, "player1", SpritePreset::RacingCarBlue);
+// ----------------------------------------------------------------------------------------------
 
-    // Audio
-    set_game_audio(&mut game, MusicPreset::WhimsicalPopsicle, 0.2);
-
-    // Road lines
-    create_road_lines(&mut game, SpritePreset::RacingBarrierWhite);
-
-    // Road obstacles
+fn add_obstacles(game: &mut Game<GameState>) {
     let obstacle_presets = vec![
         SpritePreset::RacingBarrelBlue,
         SpritePreset::RacingBarrelRed,
@@ -60,17 +57,47 @@ fn main() {
         obstacle.translation.x = thread_rng().gen_range(800.0..1600.0);
         obstacle.translation.y = thread_rng().gen_range(-300.0..300.0);
     }
+}
 
-    // Create the health message
-    let health_message = game.add_text("health_message", "Health: 5");
-    health_message.translation = Vec2::new(550.0, 320.0);
+// ----------------------------------------------------------------------------------------------
 
-    // Add one or more functions with logic for your game. When the game is run, the logic
+fn create_message(game: &mut Game<GameState>, label: &str, text: &str, x: f32, y:f32) {
+    let message = game.add_text(label, text);
+    message.translation = Vec2::new(x, y);
+}
+
+// ----------------------------------------------------------------------------------------------
+
+
+fn main() {
+    let mut game = Game::new();
+    const PLAYER_NAME: &str = "Colin";
+
+    // Create the player sprite
+    add_player(&mut game, PLAYER_NAME, SpritePreset::RacingCarBlue);
+
+    // Show player name on top left
+    create_message(&mut game, "player_message", PLAYER_NAME, -550.0, 320.0);
+
+    // Audio
+    set_game_audio(&mut game, MusicPreset::WhimsicalPopsicle, 0.2);
+
+    // Road lines
+    create_road_lines(&mut game, SpritePreset::RacingBarrierWhite);
+
+    // Road obstacles
+    add_obstacles(&mut game);
+
+    // Health info on top right
+    create_message(&mut game, "health_message", "Health: 5", 550.0, 320.0);
+
+    // Add one or more functions with logic for the game. When the game is run, the logic
     // functions will run in the order they were added.
     game.add_logic(game_logic);
 
     // Run the game, with an initial state
     let initial_game_state = GameState {
+        player_name: PLAYER_NAME,
         health_amount: 5,
         lost: false,
     };
@@ -96,7 +123,7 @@ fn game_logic(engine: &mut Engine, game_state: &mut GameState) {
     }
 
     // Move/rotate the player sprite
-    let player1 = engine.sprites.get_mut("player1").unwrap();
+    let player1 = engine.sprites.get_mut(game_state.player_name).unwrap();
     player1.translation.y += direction * PLAYER_SPEED * engine.delta_f32;
     player1.rotation = direction * 0.15;
 
@@ -133,7 +160,7 @@ fn game_logic(engine: &mut Engine, game_state: &mut GameState) {
     // Go through all collision events and act accordingly
     for event in engine.collision_events.drain(..) {
         // We don't care if obstacles collide with each other or collisions end
-        if !event.pair.either_contains("player1") || event.state.is_end() {
+        if !event.pair.either_contains(game_state.player_name) || event.state.is_end() {
             continue;
         }
         if game_state.health_amount > 0 {
