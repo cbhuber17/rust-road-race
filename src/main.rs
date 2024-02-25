@@ -19,8 +19,18 @@ fn add_player<'game>(game: &'game mut Game<GameState>, player_name: &'game str, 
     player.collision = true;
 }
 
-fn set_game_audio(game: & mut Game<GameState>, music: MusicPreset, volume: f32) {
+fn set_game_audio(game: &mut Game<GameState>, music: MusicPreset, volume: f32) {
     game.audio_manager.play_music(music, volume);
+}
+
+fn create_road_lines(game: &mut Game<GameState>, barrier: SpritePreset) {
+    const NUM_LINES:u8 = 10;
+
+    for i in 0..NUM_LINES {
+        let roadline = game.add_sprite(format!("roadline{}", i), barrier);
+        roadline.scale = 0.1;
+        roadline.translation.x = -600.0 + 150.0 * i as f32;
+    }
 }
 
 fn main() {
@@ -32,12 +42,8 @@ fn main() {
     // Audio
     set_game_audio(&mut game, MusicPreset::WhimsicalPopsicle, 0.2);
 
-    // Create the road lines
-    for i in 0..10 {
-        let roadline = game.add_sprite(format!("roadline{}", i), SpritePreset::RacingBarrierWhite);
-        roadline.scale = 0.1;
-        roadline.translation.x = -600.0 + 150.0 * i as f32;
-    }
+    // Road lines
+    create_road_lines(&mut game, SpritePreset::RacingBarrierWhite);
 
     // Road obstacles
     let obstacle_presets = vec![
