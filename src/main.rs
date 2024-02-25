@@ -2,6 +2,7 @@
 use rusty_engine::prelude::*;
 
 const PLAYER_SPEED: f32 = 250.0;
+const ROAD_SPEED: f32 = 400.0;
 
 // Custom game state struct
 #[derive(Resource)]
@@ -22,6 +23,13 @@ fn main() {
     // Audio
     game.audio_manager
         .play_music(MusicPreset::WhimsicalPopsicle, 0.2);
+
+    // Create the road lines
+    for i in 0..10 {
+        let roadline = game.add_sprite(format!("roadline{}", i), SpritePreset::RacingBarrierWhite);
+        roadline.scale = 0.1;
+        roadline.translation.x = -600.0 + 150.0 * i as f32;
+    }
 
     // Add one or more functions with logic for your game. When the game is run, the logic
     // functions will run in the order they were added.
@@ -56,5 +64,17 @@ fn game_logic(engine: &mut Engine, game_state: &mut GameState) {
     // End the game when OOB
     if player1.translation.y < -360.0 || player1.translation.y > 360.0 {
         game_state.health_amount = 0;
+    }
+
+    // Move road objects
+    for sprite in engine.sprites.values_mut() {
+        if sprite.label.starts_with("roadline") {
+            sprite.translation.x -= ROAD_SPEED * engine.delta_f32;
+
+            // Translate road objects to other side of screen if gone too far
+            if sprite.translation.x < -675.0 {
+                sprite.translation.x += 1500.0;
+            }
+        }
     }
 }
