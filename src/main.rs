@@ -14,6 +14,25 @@ struct GameState<'name> {
 
 // ----------------------------------------------------------------------------------------------
 
+/// Adds a player to the game with the specified name and car sprite.
+///
+/// This function creates a new player sprite with the given `player_name` and `car` sprite preset,
+/// adds it to the `game`, sets its initial position and collision properties.
+///
+/// # Arguments
+///
+/// * `game` - A mutable reference to the game instance where the player will be added.
+/// * `player_name` - The name of the player.
+/// * `car` - The sprite preset representing the player's car.
+///
+/// # Example
+///
+/// ```
+/// use my_game_library::{Game, GameState, SpritePreset};
+///
+/// let mut game = Game::<GameState>::new();
+/// add_player(&mut game, "Player 1", SpritePreset::Car);
+/// ```
 fn add_player<'game>(game: &'game mut Game<GameState>, player_name: &'game str, car: SpritePreset) {
     let player = game.add_sprite(player_name, car);
     player.translation.x = -500.0;
@@ -23,12 +42,49 @@ fn add_player<'game>(game: &'game mut Game<GameState>, player_name: &'game str, 
 
 // ----------------------------------------------------------------------------------------------
 
+/// Sets the game audio to play the specified music preset at the given volume.
+///
+/// This function plays the specified `music` preset with the provided `volume` using the game's
+/// audio manager.
+///
+/// # Arguments
+///
+/// * `game` - A mutable reference to the game instance where the audio will be played.
+/// * `music` - The preset representing the music to be played.
+/// * `volume` - The volume level at which the music will be played, ranging from 0.0 (silent) to 1.0 (full volume).
+///
+/// # Example
+///
+/// ```
+/// use my_game_library::{Game, GameState, MusicPreset};
+///
+/// let mut game = Game::<GameState>::new();
+/// set_game_audio(&mut game, MusicPreset::Background, 0.8);
+/// ```
 fn set_game_audio(game: &mut Game<GameState>, music: MusicPreset, volume: f32) {
     game.audio_manager.play_music(music, volume);
 }
 
 // ----------------------------------------------------------------------------------------------
 
+/// Creates road lines in the game with the specified barrier sprite.
+///
+/// This function generates a series of road lines with the given `barrier` sprite preset
+/// and adds them to the `game`.
+///
+/// # Arguments
+///
+/// * `game` - A mutable reference to the game instance where the road lines will be created.
+/// * `barrier` - The sprite preset representing the barrier used for road lines.
+///
+/// # Example
+///
+/// ```
+/// use my_game_library::{Game, GameState, SpritePreset};
+///
+/// let mut game = Game::<GameState>::new();
+/// create_road_lines(&mut game, SpritePreset::Barrier);
+/// ```
 fn create_road_lines(game: &mut Game<GameState>, barrier: SpritePreset) {
     const NUM_LINES:u8 = 10;
 
@@ -39,9 +95,25 @@ fn create_road_lines(game: &mut Game<GameState>, barrier: SpritePreset) {
     }
 }
 
-
 // ----------------------------------------------------------------------------------------------
 
+/// Adds obstacles to the game.
+///
+/// This function initializes and adds obstacles to the game instance. The obstacles are created
+/// with predefined presets and randomized positions within the game world.
+///
+/// # Arguments
+///
+/// * `game` - A mutable reference to the game instance where the obstacles will be added.
+///
+/// # Example
+///
+/// ```
+/// use my_game_library::{Game, GameState};
+///
+/// let mut game = Game::<GameState>::new();
+/// add_obstacles(&mut game);
+/// ```
 fn add_obstacles(game: &mut Game<GameState>) {
     let obstacle_presets = vec![
         SpritePreset::RacingBarrelBlue,
@@ -61,6 +133,27 @@ fn add_obstacles(game: &mut Game<GameState>) {
 
 // ----------------------------------------------------------------------------------------------
 
+/// Creates a message in the game with the specified label, text, and position.
+///
+/// This function creates a message with the given `label` and `text` content and adds it to
+/// the `game` instance at the specified position (`x`, `y`).
+///
+/// # Arguments
+///
+/// * `game` - A mutable reference to the game instance where the message will be created.
+/// * `label` - The label or identifier for the message.
+/// * `text` - The content text of the message.
+/// * `x` - The x-coordinate position where the message will be placed.
+/// * `y` - The y-coordinate position where the message will be placed.
+///
+/// # Example
+///
+/// ```
+/// use my_game_library::{Game, GameState};
+///
+/// let mut game = Game::<GameState>::new();
+/// create_message(&mut game, "Info", "Welcome to the game!", 100.0, 200.0);
+/// ```
 fn create_message(game: &mut Game<GameState>, label: &str, text: &str, x: f32, y:f32) {
     let message = game.add_text(label, text);
     message.translation = Vec2::new(x, y);
@@ -68,7 +161,10 @@ fn create_message(game: &mut Game<GameState>, label: &str, text: &str, x: f32, y
 
 // ----------------------------------------------------------------------------------------------
 
-
+/// Entry point of the game.
+///
+/// This function initializes the game, creates the player sprite, sets up audio and visual elements,
+/// and runs the game logic.
 fn main() {
     let mut game = Game::new();
     const PLAYER_NAME: &str = "Colin";
