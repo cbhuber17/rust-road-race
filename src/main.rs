@@ -14,6 +14,10 @@ struct GameState<'name> {
 
 // ----------------------------------------------------------------------------------------------
 
+// Main helpers
+
+// ----------------------------------------------------------------------------------------------
+
 fn add_player<'game>(game: &'game mut Game<GameState>, player_name: &'game str, car: SpritePreset) {
     let player = game.add_sprite(player_name, car);
     player.translation.x = -500.0;
@@ -30,7 +34,7 @@ fn set_game_audio(game: &mut Game<GameState>, music: MusicPreset, volume: f32) {
 // ----------------------------------------------------------------------------------------------
 
 fn create_road_lines(game: &mut Game<GameState>, barrier: SpritePreset) {
-    const NUM_LINES:u8 = 10;
+    const NUM_LINES: u8 = 10;
 
     for i in 0..NUM_LINES {
         let roadline = game.add_sprite(format!("roadline{}", i), barrier);
@@ -38,7 +42,6 @@ fn create_road_lines(game: &mut Game<GameState>, barrier: SpritePreset) {
         roadline.translation.x = -600.0 + 150.0 * i as f32;
     }
 }
-
 
 // ----------------------------------------------------------------------------------------------
 
@@ -61,17 +64,21 @@ fn add_obstacles(game: &mut Game<GameState>) {
 
 // ----------------------------------------------------------------------------------------------
 
-fn create_message(game: &mut Game<GameState>, label: &str, text: &str, x: f32, y:f32) {
+fn create_message(game: &mut Game<GameState>, label: &str, text: &str, x: f32, y: f32) {
     let message = game.add_text(label, text);
     message.translation = Vec2::new(x, y);
 }
 
 // ----------------------------------------------------------------------------------------------
 
-
 fn main() {
     let mut game = Game::new();
     const PLAYER_NAME: &str = "Colin";
+    let initial_game_state = GameState {
+        player_name: PLAYER_NAME,
+        health_amount: 5,
+        lost: false,
+    };
 
     // Create the player sprite
     add_player(&mut game, PLAYER_NAME, SpritePreset::RacingCarBlue);
@@ -89,50 +96,54 @@ fn main() {
     add_obstacles(&mut game);
 
     // Health info on top right
-    create_message(&mut game, "health_message", "Health: 5", 550.0, 320.0);
+    create_message(
+        &mut game,
+        "health_message",
+        &format!("Health: {}", initial_game_state.health_amount),
+        550.0,
+        320.0,
+    );
 
     // Add one or more functions with logic for the game. When the game is run, the logic
     // functions will run in the order they were added.
     game.add_logic(game_logic);
 
     // Run the game, with an initial state
-    let initial_game_state = GameState {
-        player_name: PLAYER_NAME,
-        health_amount: 5,
-        lost: false,
-    };
-
     game.run(initial_game_state);
 }
 
-// The first parameter is always a `&mut Engine`, and the second parameter is a mutable reference to your custom game state struct (`&mut GameState` in this case).
-// This function will be run once each frame.
-fn game_logic(engine: &mut Engine, game_state: &mut GameState) {
-    // Don't run any more game logic if the game has ended
-    if game_state.lost {
-        return;
-    }
+// ----------------------------------------------------------------------------------------------
 
-    // Collect keyboard input
+// Game Logic Helpers
+
+// ----------------------------------------------------------------------------------------------
+
+fn handle_keyboard(engine: &mut Engine, game_state: &mut GameState) {
     let mut direction = 0.0;
+
+    // React to keyboard input
     if engine.keyboard_state.pressed(KeyCode::Up) {
         direction += 1.0;
     }
+
     if engine.keyboard_state.pressed(KeyCode::Down) {
         direction -= 1.0;
     }
 
     // Move/rotate the player sprite
-    let player1 = engine.sprites.get_mut(game_state.player_name).unwrap();
-    player1.translation.y += direction * PLAYER_SPEED * engine.delta_f32;
-    player1.rotation = direction * 0.15;
+    let player = engine.sprites.get_mut(game_state.player_name).unwrap();
+    player.translation.y += direction * PLAYER_SPEED * engine.delta_f32;
+    player.rotation = direction * 0.15;
 
     // End the game when OOB
-    if player1.translation.y < -360.0 || player1.translation.y > 360.0 {
+    if player.translation.y < -360.0 || player.translation.y > 360.0 {
         game_state.health_amount = 0;
     }
+}
 
-    // Move road objects
+// ----------------------------------------------------------------------------------------------
+
+fn move_road_objects(engine: &mut Engine) {
     for sprite in engine.sprites.values_mut() {
         // Road lines
         if sprite.label.starts_with("roadline") {
@@ -153,8 +164,11 @@ fn game_logic(engine: &mut Engine, game_state: &mut GameState) {
             }
         }
     }
+}
 
-    // Deal with collisions
+// ----------------------------------------------------------------------------------------------
+
+fn handle_collisions(engine: &mut Engine, game_state: &mut GameState) {
     let health_message = engine.texts.get_mut("health_message").unwrap();
 
     // Go through all collision events and act accordingly
@@ -169,7 +183,11 @@ fn game_logic(engine: &mut Engine, game_state: &mut GameState) {
             engine.audio_manager.play_sfx(SfxPreset::Impact3, 0.7);
         }
     }
+}
 
+// ----------------------------------------------------------------------------------------------
+
+fn check_health(engine: &mut Engine, game_state: &mut GameState) {
     if game_state.health_amount == 0 {
         game_state.lost = true;
         let game_over = engine.add_text("game over", "Game Over");
@@ -177,4 +195,27 @@ fn game_logic(engine: &mut Engine, game_state: &mut GameState) {
         engine.audio_manager.stop_music();
         engine.audio_manager.play_sfx(SfxPreset::Jingle3, 0.75);
     }
+}
+
+// ----------------------------------------------------------------------------------------------
+
+// The first parameter is always a `&mut Engine`, and the second parameter is a mutable reference to your custom game state struct (`&mut GameState` in this case).
+// This function will be run once each frame.
+fn game_logic(engine: &mut Engine, game_state: &mut GameState) {
+    // Don't run any more game logic if the game has ended
+    if game_state.lost {
+        return;
+    }
+
+    // Check for KB input
+    handle_keyboard(engine, game_state);
+
+    // Move road objects
+    move_road_objects(engine);
+
+    // Deal with collisions
+    handle_collisions(engine, game_state);
+
+    // End the game if out of car health
+    check_health(engine, game_state);
 }
