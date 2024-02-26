@@ -4,7 +4,10 @@ use rusty_engine::prelude::*;
 const PLAYER_SPEED: f32 = 250.0;
 const ROAD_SPEED: f32 = 400.0;
 
-// Custom game state struct
+/// Represents the state of the game.
+///
+/// This struct holds information about the player's name, health amount, and whether the game
+/// is lost or not.
 #[derive(Resource)]
 struct GameState<'name> {
     player_name: &'name str,
@@ -13,11 +16,8 @@ struct GameState<'name> {
 }
 
 // ----------------------------------------------------------------------------------------------
-
 // Main helpers
-
 // ----------------------------------------------------------------------------------------------
-
 /// Adds a player to the game with the specified name and car sprite.
 ///
 /// This function creates a new player sprite with the given `player_name` and `car` sprite preset,
@@ -45,7 +45,6 @@ fn add_player<'game>(game: &'game mut Game<GameState>, player_name: &'game str, 
 }
 
 // ----------------------------------------------------------------------------------------------
-
 /// Sets the game audio to play the specified music preset at the given volume.
 ///
 /// This function plays the specified `music` preset with the provided `volume` using the game's
@@ -70,7 +69,6 @@ fn set_game_audio(game: &mut Game<GameState>, music: MusicPreset, volume: f32) {
 }
 
 // ----------------------------------------------------------------------------------------------
-
 /// Creates road lines in the game with the specified barrier sprite.
 ///
 /// This function generates a series of road lines with the given `barrier` sprite preset
@@ -100,7 +98,6 @@ fn create_road_lines(game: &mut Game<GameState>, barrier: SpritePreset) {
 }
 
 // ----------------------------------------------------------------------------------------------
-
 /// Adds obstacles to the game.
 ///
 /// This function initializes and adds obstacles to the game instance. The obstacles are created
@@ -136,7 +133,6 @@ fn add_obstacles(game: &mut Game<GameState>) {
 }
 
 // ----------------------------------------------------------------------------------------------
-
 /// Creates a message in the game with the specified label, text, and position.
 ///
 /// This function creates a message with the given `label` and `text` content and adds it to
@@ -164,7 +160,6 @@ fn create_message(game: &mut Game<GameState>, label: &str, text: &str, x: f32, y
 }
 
 // ----------------------------------------------------------------------------------------------
-
 /// Entry point of the game.
 ///
 /// This function initializes the game, creates the player sprite, sets up audio and visual elements,
@@ -211,11 +206,30 @@ fn main() {
 }
 
 // ----------------------------------------------------------------------------------------------
-
 // Game Logic Helpers
-
 // ----------------------------------------------------------------------------------------------
-
+/// Handles keyboard input for player movement and game control.
+///
+/// This function updates the player's position and rotation based on keyboard input,
+/// as well as checks for out-of-bounds conditions to end the game.
+///
+/// # Arguments
+///
+/// * `engine` - A mutable reference to the game engine.
+/// * `game_state` - A mutable reference to the current game state.
+///
+/// # Example
+///
+/// ```
+/// use my_game_library::{Engine, GameState};
+///
+/// fn main() {
+///     let mut engine = Engine::new();
+///     let mut game_state = GameState::new();
+///
+///     handle_keyboard(&mut engine, &mut game_state);
+/// }
+/// ```
 fn handle_keyboard(engine: &mut Engine, game_state: &mut GameState) {
     let mut direction = 0.0;
 
@@ -240,7 +254,26 @@ fn handle_keyboard(engine: &mut Engine, game_state: &mut GameState) {
 }
 
 // ----------------------------------------------------------------------------------------------
-
+/// Moves road objects (road lines and obstacles) horizontally across the screen.
+///
+/// This function updates the position of road lines and obstacles by moving them to the left,
+/// simulating the effect of the player's movement. If road objects move out of the screen,
+/// they are repositioned to the other side to create an endless scrolling effect.
+///
+/// # Arguments
+///
+/// * `engine` - A mutable reference to the game engine.
+///
+/// # Example
+///
+/// ```
+/// use my_game_library::Engine;
+///
+/// fn main() {
+///     let mut engine = Engine::new();
+///     move_road_objects(&mut engine);
+/// }
+/// ```
 fn move_road_objects(engine: &mut Engine) {
     for sprite in engine.sprites.values_mut() {
         // Road lines
@@ -265,7 +298,29 @@ fn move_road_objects(engine: &mut Engine) {
 }
 
 // ----------------------------------------------------------------------------------------------
-
+/// Handles collision events between game objects.
+///
+/// This function processes collision events between game objects, specifically between the player
+/// and obstacles. It reduces the player's health upon collision, updates the health message, and
+/// plays a sound effect.
+///
+/// # Arguments
+///
+/// * `engine` - A mutable reference to the game engine.
+/// * `game_state` - A mutable reference to the current game state.
+///
+/// # Example
+///
+/// ```
+/// use my_game_library::{Engine, GameState};
+///
+/// fn main() {
+///     let mut engine = Engine::new();
+///     let mut game_state = GameState::new();
+///
+///     handle_collisions(&mut engine, &mut game_state);
+/// }
+/// ```
 fn handle_collisions(engine: &mut Engine, game_state: &mut GameState) {
     let health_message = engine.texts.get_mut("health_message").unwrap();
 
@@ -284,7 +339,28 @@ fn handle_collisions(engine: &mut Engine, game_state: &mut GameState) {
 }
 
 // ----------------------------------------------------------------------------------------------
-
+/// Checks the player's health status and handles game over conditions.
+///
+/// This function checks the player's health amount, and if it reaches zero, it sets the game
+/// state to lost, displays a "Game Over" message, stops the game music, and plays a game over sound effect.
+///
+/// # Arguments
+///
+/// * `engine` - A mutable reference to the game engine.
+/// * `game_state` - A mutable reference to the current game state.
+///
+/// # Example
+///
+/// ```
+/// use my_game_library::{Engine, GameState};
+///
+/// fn main() {
+///     let mut engine = Engine::new();
+///     let mut game_state = GameState::new();
+///
+///     check_health(&mut engine, &mut game_state);
+/// }
+/// ```
 fn check_health(engine: &mut Engine, game_state: &mut GameState) {
     if game_state.health_amount == 0 {
         game_state.lost = true;
@@ -296,9 +372,31 @@ fn check_health(engine: &mut Engine, game_state: &mut GameState) {
 }
 
 // ----------------------------------------------------------------------------------------------
-
-// The first parameter is always a `&mut Engine`, and the second parameter is a mutable reference to your custom game state struct (`&mut GameState` in this case).
-// This function will be run once each frame.
+/// Handles the game logic, including player input, object movement, collisions, and game over conditions.
+///
+/// This function orchestrates various aspects of the game, including handling player input,
+/// moving road objects, detecting collisions, and checking for game over conditions such as
+/// running out of health.
+/// The first parameter is always a `&mut Engine`, and the second parameter is a mutable reference to your custom game state struct (`&mut GameState` in this case).
+/// This function will be run once each frame.
+///
+/// # Arguments
+///
+/// * `engine` - A mutable reference to the game engine.
+/// * `game_state` - A mutable reference to the current game state.
+///
+/// # Example
+///
+/// ```
+/// use my_game_library::{Engine, GameState};
+///
+/// fn main() {
+///     let mut engine = Engine::new();
+///     let mut game_state = GameState::new();
+///
+///     game_logic(&mut engine, &mut game_state);
+/// }
+/// ```
 fn game_logic(engine: &mut Engine, game_state: &mut GameState) {
     // Don't run any more game logic if the game has ended
     if game_state.lost {
